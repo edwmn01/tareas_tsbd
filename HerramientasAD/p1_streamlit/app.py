@@ -1,22 +1,32 @@
 import streamlit as st
-from db import insertar_cliente
+import pandas as pd
+from db import insertar_persona, obtener_personas
 from validaciones import validar_formulario
 
 # =================== APP WEB ===================
 
-st.title('Formulario de clientes')
+st.title('Formulario de personas')
 
 nombre = st.text_input('Ingresa un nombre:')
 apellido = st.text_input('Ingresa un apellido:')
-fecha_nacimiento = st.date_input('Selecciona una fecha de nacimiento:')
-email = st.text_input('Ingresa un email:')
-sexo = st.radio('Selecciona el sexo:', ('Masculino', 'Femenino'))
+cedula = st.text_input('Ingresa una cedula:')
+edad = st.slider('Ingresa una edad:', max_value=100, min_value=1)
+correo = st.text_input('Ingresa un correo electrónico:')
+estado_civil = st.selectbox('Elige el estado civil:', ['Soltero', 'Casado', 'Viudo', 'Divorciado', 'Union libre'])
 telefono = st.text_input('Ingresa un teléfono:')
 direccion = st.text_input('Ingresa una dirección:')
+genero = st.radio('Selecciona el genero:', ('Masculino', 'Femenino'))
 
 btn_guardar = st.button('Guardar')
 
 
 if btn_guardar:
-    if validar_formulario(nombre, apellido, email, telefono, direccion):
-        insertar_cliente(nombre, apellido, fecha_nacimiento, email, sexo, telefono, direccion)
+    if validar_formulario(nombre, apellido, cedula, correo, telefono, direccion):
+        insertar_persona(nombre, apellido, cedula, edad, correo, estado_civil, telefono, direccion, genero)
+
+
+st.title('Personas registradas en la base de datos')
+
+df_personas = pd.DataFrame(obtener_personas(), columns=['ID', 'Nombre', 'Apellido', 'Cédula', 'Edad', 'Correo', 'Estado Civil', 'Teléfono', 'Dirección', 'Género'])
+st.dataframe(df_personas)
+
