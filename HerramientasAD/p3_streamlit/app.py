@@ -100,7 +100,7 @@ print(df.columns.tolist())
 print(df.info())
 
 # =============================== GRÁFICA 1 ===============================
-st.subheader(f'Total por mes y tipo - Año {anio}, provincia: {provincia}, tipo de contratación: {tipo_contratacion}')
+st.subheader(f'1. Total por mes y tipo - Año {anio}, provincia: {provincia}, tipo de contratación: {tipo_contratacion}')
 grouped = df.groupby(['mes_str', 'internal_type'])['total'].sum().reset_index()
 
 pivoted = grouped.pivot(index='mes_str', columns='internal_type', values='total').fillna(0)
@@ -135,7 +135,25 @@ plt.tight_layout()
 st.pyplot(fig)
 
 # =============================== GRÁFICA 2 ===============================
-st.subheader(f'Monto total por tipo de contratación - Año {anio}, provincia: {provincia}, tipo de contratación: {tipo_contratacion}')
+st.subheader(f'2. Evolución Mensual- Año {anio}, provincia: {provincia}, tipo de contratación: {tipo_contratacion}')
+
+total_mes = df.groupby('mes_str')['total'].sum().reset_index()
+
+total_mes['mes_str'] = pd.Categorical(total_mes['mes_str'], categories=list(meses.values()), ordered=True)
+total_mes = total_mes.sort_values('mes_str')
+
+sns.set(style="whitegrid")
+plt.figure(figsize=(12, 6))
+line_plot = sns.lineplot(data=total_mes, x='mes_str', y='total', marker='o')
+
+line_plot.set_title('Evolución Mensual de los Montos Totales')
+line_plot.set_xlabel('Mes')
+line_plot.set_ylabel('Monto Total')
+
+st.pyplot(plt)
+
+# =============================== GRÁFICA 3 ===============================
+st.subheader(f'3. Monto total por tipo de contratación - Año {anio}, provincia: {provincia}, tipo de contratación: {tipo_contratacion}')
 
 totales_por_tipo = df.groupby('internal_type')['total'].sum().reset_index()
 
@@ -163,8 +181,8 @@ ax.axis('equal')
 
 st.pyplot(fig)
 
-# =============================== GRÁFICA 3 ===============================
-st.subheader(f'Monto Total vs Número de Contratos por Tipo de Contratación - Año {anio}, provincia: {provincia}, tipo de contratación: {tipo_contratacion}')
+# =============================== GRÁFICA 4 ===============================
+st.subheader(f'4. Monto Total vs Número de Contratos por Tipo de Contratación - Año {anio}, provincia: {provincia}, tipo de contratación: {tipo_contratacion}')
 resumen = df.groupby('internal_type').agg(
     monto_total=('total', 'sum'),
     numero_contratos=('total', 'count')
@@ -201,3 +219,17 @@ ax.legend(
 plt.tight_layout()
 
 st.pyplot(fig)
+
+# =============================== GRÁFICA 5 ===============================
+st.subheader(f'5. Total de Contratos por Tipo y Mes - Año {anio}, provincia: {provincia}, tipo de contratación: {tipo_contratacion}')
+
+plt.figure(figsize=(12, 6))
+grafica_lineal = sns.lineplot(data=df, x='mes_str', y='total', hue='internal_type', marker='o')
+
+grafica_lineal.set_title('Total de Contratos por Tipo y Mes')
+grafica_lineal.set_xlabel('Mes')
+grafica_lineal.set_ylabel('Total')
+plt.xticks(rotation=45)
+plt.legend(title='Tipo Contratación', bbox_to_anchor=(1.05, 1), loc='upper left')
+
+st.pyplot(plt)
