@@ -1,118 +1,64 @@
-import requests
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 import streamlit as st
 
 import graficas as gf
+import utils as utl
+
 
 st.title('Compras Públicas - Eduardo Mendieta')
 
-anio = st.selectbox('Elige el año:', [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025])
+anio_str = st.selectbox('Elige el año:', utl.anios_compras_publicas)
+provincia = st.selectbox('Selecciona la provincia:', utl.provincias)
+tipo_contratacion = st.selectbox('Selecciona el tipo de contratación:', utl.tipo_contratacion_compras_publicas)
 
-provincia = st.selectbox('Selecciona la provincia:', [
-    'Todas',
-    'AZUAY',
-    'BOLIVAR',
-    'CAÑAR',
-    'CARCHI',
-    'CHIMBORAZO',
-    'COTOPAXI',
-    'EL ORO',
-    'ESMERALDAS',
-    'GALAPAGOS',
-    'GUAYAS',
-    'LOS RIOS',
-    'MANABI',
-    'MORONA SANTIAGO',
-    'NAPO',
-    'ORELLANA',
-    'PICHINCHA',
-    'SUCUMBIOS',
-    'TUNGURAHUA',
-    'ZAMORA CHINCHIPE',
-    'SANTA ELENA',
-    'COTOPAXI',
-    'SANTO DOMINGO DE LOS TSACHILAS',
-    'PASTAZA',
-    'LOJA'
-])
-
-tipo_contratacion = st.selectbox('Selecciona el tipo de contratación:', [
-    'Todas',
-    'Subasta Inversa Electrónica',
-    'Catálogo electrónico - Mejor oferta',
-    'Catálogo electrónico - Compra directa',
-    'Obra artística, científica o literaria',
-    'Menor Cuantía',
-    'Cotización',
-    'Contratos entre Entidades Públicas o sus subsidiarias',
-    'Bienes y Servicios únicos',
-    'Licitación de Seguros',
-    'Contratacion directa',
-    'Transporte de correo interno o internacional',
-    'Repuestos o Accesorios',
-    'Comunicación Social – Contratación Directa'
-])
-
-meses = {
-    1: 'Enero',
-    2: 'Febrero',
-    3: 'Marzo',
-    4: 'Abril',
-    5: 'Mayo',
-    6: 'Junio',
-    7: 'Julio',
-    8: 'Agosto',
-    9: 'Septiembre',
-    10: 'Octubre',
-    11: 'Noviembre',
-    12: 'Diciembre'
-}
 
 url_base = 'https://datosabiertos.compraspublicas.gob.ec/PLATAFORMA/api/get_analysis'
 
-params = {"year": anio}
-if provincia != 'Todas': params['region'] = provincia
-if tipo_contratacion != 'Todas': params['type'] = tipo_contratacion
 
-response = requests.get(url_base, params=params)
-response.raise_for_status()
-data = response.json()
+data = utl.get_data(url_base, [int(i) for i in utl.anios_compras_publicas[1:]] if anio_str == 'Todos' else [int(anio_str)],
+                    None if provincia == 'Todas' else provincia, None if tipo_contratacion == 'Todas' else tipo_contratacion)
 
 df = pd.DataFrame(data)
+df['mes_str'] = df['month'].map(utl.meses).astype(str)
+df.total = df.total.astype(float)
+print(df.columns.tolist())
 
-st.subheader(f'Compras publicas del año: {anio}, provincia: {provincia.capitalize()}, tipo contratación: {tipo_contratacion}')
+st.subheader(f'Compras publicas del año: {anio_str}, provincia: {provincia.capitalize()}, tipo contratación: {tipo_contratacion}')
 st.dataframe(df)
 
-btn_descarga = st.download_button(f"Descargar reporte del año {anio}", df.to_csv(index=False), file_name=f"reporte_{anio}.csv")
+btn_descarga = st.download_button(f"Descargar reporte del año {anio_str}", df.to_csv(index=False), file_name=f"reporte_{anio_str}.csv")
 
 if btn_descarga:
     st.success("Datos descargados correctamente.")
 
 
-print(df.columns.tolist())
+# ====================================== GRÁFICAS EN PESTAÑAS ======================================
+st.subheader('Gráficas:')
 
+tabs = st.tabs([
+    "1. Total por mes y tipo",
+    "2. Evolución Mensual",
+    "3. Monto total por tipo",
+    "4. Total vs Contratos",
+    "5. Contratos por tipo y mes"
+])
 
+with tabs[0]:
+    st.write(f'1. Total por mes y tipo - Año {anio_str}, provincia: {provincia}, tipo de contratación: {tipo_contratacion}')
+    st.plotly_chart(gf.total_por_mes_tipo(df), use_container_width=True)
 
+with tabs[1]:
+    st.write(f'2. Evolución Mensual - Año {anio_str}, provincia: {provincia}, tipo de contratación: {tipo_contratacion}')
+    st.plotly_chart(gf.evolucion_mensual(df, utl.meses), use_container_width=True)
 
-df['mes_str'] = df['month'].map(meses).astype(str)
-df.total = df.total.astype(float)
+with tabs[2]:
+    st.write(f'3. Monto total por tipo de contratación - Año {anio_str}, provincia: {provincia}, tipo de contratación: {tipo_contratacion}')
+    st.plotly_chart(gf.monto_total_por_tipo(df), use_container_width=True)
 
-print(df.columns.tolist())
-print(df.info())
-# ====================================== GRÁFICAS ======================================
-st.subheader(f'1. Total por mes y tipo - Año {anio}, provincia: {provincia}, tipo de contratación: {tipo_contratacion}')
-st.plotly_chart(gf.total_por_mes_tipo(df), use_container_width=True)
+with tabs[3]:
+    st.write(f'4. Monto Total vs Número de Contratos por Tipo de Contratación - Año {anio_str}, provincia: {provincia}, tipo de contratación: {tipo_contratacion}')
+    st.plotly_chart(gf.total_vs_numcontratos(df), use_container_width=True)
 
-st.subheader(f'2. Evolución Mensual - Año {anio}, provincia: {provincia}, tipo de contratación: {tipo_contratacion}')
-st.plotly_chart(gf.evolucion_mensual(df, meses), use_container_width=True)
-
-st.subheader(f'3. Monto total por tipo de contratación - Año {anio}, provincia: {provincia}, tipo de contratación: {tipo_contratacion}')
-st.plotly_chart(gf.monto_total_por_tipo(df), use_container_width=True)
-
-st.subheader(f'4. Monto Total vs Número de Contratos por Tipo de Contratación - Año {anio}, provincia: {provincia}, tipo de contratación: {tipo_contratacion}')
-st.plotly_chart(gf.total_vs_numcontratos(df), use_container_width=True)
-
-st.subheader(f'5. Total de Contratos por Tipo y Mes - Año {anio}, provincia: {provincia}, tipo de contratación: {tipo_contratacion}')
-st.plotly_chart(gf.total_contratos_por_tipo_mes(df), use_container_width=True)
+with tabs[4]:
+    st.write(f'5. Total de Contratos por Tipo y Mes - Año {anio_str}, provincia: {provincia}, tipo de contratación: {tipo_contratacion}')
+    st.plotly_chart(gf.total_contratos_por_tipo_mes(df), use_container_width=True)
