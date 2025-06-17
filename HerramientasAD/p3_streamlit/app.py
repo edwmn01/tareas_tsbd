@@ -3,6 +3,7 @@ import streamlit as st
 
 import graficas as gf
 import utils as utl
+import modelos as mdl
 
 
 st.title('Compras Públicas - Eduardo Mendieta')
@@ -62,3 +63,34 @@ with tabs[3]:
 with tabs[4]:
     st.write(f'5. Total de Contratos por Tipo y Mes - Año {anio_str}, provincia: {provincia}, tipo de contratación: {tipo_contratacion}')
     st.plotly_chart(gf.total_contratos_por_tipo_mes(df), use_container_width=True)
+
+
+# ====================================== MODELOS ======================================
+st.subheader('Modelos:')
+
+tabs_mdl = st.tabs([
+    "1. Clustering de Provincias/Contratos",
+    "2. Predicción de Montos",
+    "3. Clasificación de Contratos por Valor",
+    "4. Clusters con PCA",
+    "5. Detección de Contratos Inusuales"
+])
+
+with tabs_mdl[0]:
+    st.plotly_chart(gf.grafica_kmeans(mdl.modelo_kmeans(df)), use_container_width=True)
+
+with tabs_mdl[1]:
+    model, forecast = mdl.modelo_prophet(df)
+    st.plotly_chart(gf.grafica_prophet(model, forecast), use_container_width=True)
+
+with tabs_mdl[2]:
+    accuracy = mdl.modelo_regresion_logistica(df)
+    res = 'El modelo no soporta un solo año para la clasificación.' if not accuracy else f'Accuracy: {accuracy:.2f}'
+    st.write(res)
+    st.plotly_chart(gf.grafica_clasificacion_RL(df), use_container_width=True)
+
+with tabs_mdl[3]:
+    st.plotly_chart(gf.grafica_reduccion_PCA(df, mdl.modelo_PCA(df)), use_container_width=True)
+
+with tabs_mdl[4]:
+    st.plotly_chart(gf.grafica_isolation_forest(mdl.modelo_isolation_forest(df)), use_container_width=True)

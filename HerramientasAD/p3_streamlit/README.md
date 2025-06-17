@@ -11,7 +11,7 @@ En esta práctica realizamos las siguientes tareas:
 
 Instalar las siguientes librerías con pip:
 
-- streamlit, pandas, requests, plotly, 
+- streamlit, pandas, requests, plotly, scikit-learn, prophet.
 
 ### Ejecutar el proyecto:
 
