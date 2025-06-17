@@ -12,3 +12,7 @@ En esta práctica realizamos las siguientes tareas:
 Instalar las siguientes librerías con pip:
 
 - streamlit, pandas, requests, plotly, 
+
+### Ejecutar el proyecto:
+
+Abrir un emulador de terminal en el directorio raíz y ejecutar: ***streamlit run app.py***
